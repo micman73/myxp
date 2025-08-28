@@ -303,4 +303,31 @@ other['completionstate'] == COMPLETION_COMPLETE) {
             error_log("🎉 LEVEL UP: User {$user->firstname} {$user->lastname} reached level {$new_level} in course {$course->shortname}");
         }
     }
+    /**
+ * Award XP when a quiz is graded (manual or regrading).
+ */
+    public static function quiz_graded(\mod_quiz\event\attempt_graded $event) {
+                global $DB;
+                $data = $event->get_data();
+                $userid   = (int)$data['relateduserid'] ?: (int)$data['userid'];
+                $courseid = (int)$data['courseid'];
+                $attemptid = (int)$data['objectid'];
+            
+                if (!$userid || !$courseid || !$attemptid) {
+                    return;
+                }
+            
+                // Ένα μικρό bonus για graded, όχι μόνο για passed.
+                if (!self::check_unique_xp_award($userid, $courseid, 'quiz_graded', $attemptid)) {
+                    self::award_xp(
+                        $userid,
+                        $courseid,
+                        'Quiz Graded',
+                        3,
+                        $attemptid,
+                        'quiz_graded'
+                    );
+                }
+}
+                
 }
